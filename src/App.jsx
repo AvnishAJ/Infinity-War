@@ -21,12 +21,12 @@ const db = getDatabase(firebaseApp);
    CONSTANTS
 ═══════════════════════════════════════════════ */
 const TC = {
-  space:   { name:"Space",   color:"#00d4ff", rgb:"0,212,255",  em:"💠" },
-  reality: { name:"Reality", color:"#ff3333", rgb:"255,51,51",  em:"🔴" },
-  power:   { name:"Power",   color:"#9b30ff", rgb:"155,48,255", em:"🔮" },
-  mind:    { name:"Mind",    color:"#fde047", rgb:"253,224,71", em:"💛" },
-  time:    { name:"Time",    color:"#00ff88", rgb:"0,255,136",  em:"⏳" },
-  soul:    { name:"Soul",    color:"#ff8c00", rgb:"255,140,0",  em:"🔶" },
+  space:   { name:"The Empire",         color:"#00d4ff", rgb:"0,212,255",  em:"💠" },
+  reality: { name:"Homelanders",        color:"#ff3333", rgb:"255,51,51",  em:"🔴" },
+  power:   { name:"Thanos' Children",   color:"#9b30ff", rgb:"155,48,255", em:"🔮" },
+  mind:    { name:"Bowser",             color:"#fde047", rgb:"253,224,71", em:"💛" },
+  time:    { name:"Viltrumites",        color:"#00ff88", rgb:"0,255,136",  em:"⏳" },
+  soul:    { name:"Captain Underpants", color:"#ff8c00", rgb:"255,140,0",  em:"🔶" },
 };
 const IDS = Object.keys(TC);
 
