@@ -990,29 +990,7 @@ function TR4({teamId,team,teams,attacks,wars,allocateSafe,lockSafes,queueAttack,
       <div style={{borderTop:"1px solid rgba(255,255,255,.07)",paddingTop:18}}>
         <div className="ob" style={{fontSize:11,letterSpacing:3,color:"#ff3333",opacity:.85,marginBottom:14}}>⚔️ BATTLE GROUND</div>
 
-        {!activeWar && (
-          <div>
-            {team.strategy === "AGGRESSIVE" ? (
-              <div style={{background:"rgba(255,255,255,.02)", border:"1px solid rgba(255,255,255,.08)", borderRadius:8, padding:14}}>
-                <div style={{fontSize:13,marginBottom:12}}>You are <strong style={{color:"#ff6666"}}>AGGRESSIVE</strong>. Choose a team to wage war against.</div>
-                <div style={{display:"flex",gap:8,alignItems:"center"}}>
-                  <select value={warTgt} onChange={e=>setWarTgt(e.target.value)} style={{maxWidth:250}}>
-                    <option value="">Select target...</option>
-                    {IDS.filter(t=>t!==teamId).map(t=><option key={t} value={t}>{TC[t].em} {TC[t].name}</option>)}
-                  </select>
-                  <button className="btn" disabled={!warTgt} onClick={()=>{
-                    wageWar(teamId, warTgt);
-                    setWarTgt("");
-                  }} style={{background:"rgba(255,50,50,.2)",color:"#ff6666",border:"1px solid #ff333344"}}>⚔️ WAGE WAR</button>
-                </div>
-              </div>
-            ) : (
-              <div style={{padding:14,borderRadius:8,background:"rgba(0,200,100,.06)",border:"1px solid rgba(0,200,100,.18)"}}>
-                🛡️ Defensive stance — waiting for someone to declare war or send an alliance request.
-              </div>
-            )}
-          </div>
-        )}
+
 
         {proposalFrom && (
           <div style={{marginBottom:18,background:"rgba(253,224,71,.08)",border:"1px solid rgba(253,224,71,.3)",padding:12,borderRadius:8}}>
