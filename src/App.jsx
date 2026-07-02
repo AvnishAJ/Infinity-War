@@ -1092,7 +1092,7 @@ function TR4({teamId,team,teams,attacks,wars,allocateSafe,lockSafes,queueAttack,
                   <div style={{display:"flex",gap:8}}>
                     <select value={allyTgt} onChange={e=>setAllyTgt(e.target.value)} style={{maxWidth:200}}>
                       <option value="">Select ally...</option>
-                      {IDS.filter(t=>t!==teamId && t!==activeWar.attacker && !teams[t].allianceWith).map(t=><option key={t} value={t}>{TC[t].em} {TC[t].name}</option>)}
+                      {IDS.filter(t=>t!==teamId && t!==activeWar.defender && !teams[t].allianceWith).map(t=><option key={t} value={t}>{TC[t].em} {TC[t].name}</option>)}
                     </select>
                     <button className="btn" disabled={!allyTgt} onClick={()=>{
                       proposeAlliance(teamId, allyTgt);
