@@ -997,11 +997,11 @@ function TR4({teamId,team,teams,attacks,wars,allocateSafe,lockSafes,queueAttack,
             <div style={{fontSize:13,marginBottom:10}}>
               {opponentId ? (
                 <span>
-                  <strong style={{color:"#fde047"}}>{TC[proposalFrom].em} {TC[proposalFrom].name}</strong> requests your alliance in their war against <strong style={{color:TC[opponentId].color}}>{TC[opponentId].name}</strong>!
+                  <strong style={{color:"#fde047"}}>{TC[proposalFrom]?.em} {TC[proposalFrom]?.name}</strong> requests your alliance in their war against <strong style={{color:TC[opponentId]?.color}}>{TC[opponentId]?.name}</strong>!
                 </span>
               ) : (
                 <span>
-                  <strong style={{color:"#fde047"}}>{TC[proposalFrom].em} {TC[proposalFrom].name}</strong> requests your alliance!
+                  <strong style={{color:"#fde047"}}>{TC[proposalFrom]?.em} {TC[proposalFrom]?.name}</strong> requests your alliance!
                 </span>
               )}
             </div>
@@ -1040,19 +1040,19 @@ function TR4({teamId,team,teams,attacks,wars,allocateSafe,lockSafes,queueAttack,
           <div style={{background:"rgba(255,255,255,.02)", border:"1px solid rgba(255,255,255,.08)", borderRadius:8, padding:14}}>
             <div style={{display:"flex",alignItems:"center",gap:8,fontSize:14,fontWeight:700,marginBottom:14,borderBottom:"1px solid rgba(255,255,255,.05)",paddingBottom:10}}>
               <span>⚔️ WAR ACTIVE:</span>
-              <span style={{color:TC[activeWar.attacker].color}}>{TC[activeWar.attacker].em} {TC[activeWar.attacker].name}</span>
+              <span style={{color:TC[activeWar.attacker]?.color}}>{TC[activeWar.attacker]?.em} {TC[activeWar.attacker]?.name}</span>
               {activeWar.attackerAlly && (
                 <>
                   <span>+</span>
-                  <span style={{color:TC[activeWar.attackerAlly].color}}>{TC[activeWar.attackerAlly].em} {TC[activeWar.attackerAlly].name}</span>
+                  <span style={{color:TC[activeWar.attackerAlly]?.color}}>{TC[activeWar.attackerAlly]?.em} {TC[activeWar.attackerAlly]?.name}</span>
                 </>
               )}
               <span style={{opacity:.5,fontSize:12}}>vs</span>
-              <span style={{color:TC[activeWar.defender].color}}>{TC[activeWar.defender].em} {TC[activeWar.defender].name}</span>
+              <span style={{color:TC[activeWar.defender]?.color}}>{TC[activeWar.defender]?.em} {TC[activeWar.defender]?.name}</span>
               {activeWar.defenderAlly && (
                 <>
                   <span>+</span>
-                  <span style={{color:TC[activeWar.defenderAlly].color}}>{TC[activeWar.defenderAlly].em} {TC[activeWar.defenderAlly].name}</span>
+                  <span style={{color:TC[activeWar.defenderAlly]?.color}}>{TC[activeWar.defenderAlly]?.em} {TC[activeWar.defenderAlly]?.name}</span>
                 </>
               )}
             </div>
@@ -1062,14 +1062,14 @@ function TR4({teamId,team,teams,attacks,wars,allocateSafe,lockSafes,queueAttack,
                 <div style={{fontSize:12,marginBottom:8,color:"#fde047"}}>🤝 Recruit an Ally for this battle:</div>
                 {proposalTo ? (
                   <div style={{fontSize:12,opacity:.7}}>
-                    ⏳ Waiting for <strong style={{color:"#fde047"}}>{TC[proposalTo].name}</strong>...
+                    ⏳ Waiting for <strong style={{color:"#fde047"}}>{TC[proposalTo]?.name}</strong>...
                     <button className="btn" onClick={()=>cancelAllianceProposal(teamId)} style={{marginLeft:12,padding:"4px 8px",fontSize:9}}>Cancel</button>
                   </div>
                 ) : (
                   <div style={{display:"flex",gap:8}}>
                     <select value={allyTgt} onChange={e=>setAllyTgt(e.target.value)} style={{maxWidth:200}}>
                       <option value="">Select ally...</option>
-                      {IDS.filter(t=>t!==teamId && t!==activeWar.defender && !teams[t].allianceWith).map(t=><option key={t} value={t}>{TC[t].em} {TC[t].name}</option>)}
+                      {IDS.filter(t=>t!==teamId && t!==activeWar.defender && !teams[t]?.allianceWith).map(t=><option key={t} value={t}>{TC[t].em} {TC[t].name}</option>)}
                     </select>
                     <button className="btn" disabled={!allyTgt} onClick={()=>{
                       proposeAlliance(teamId, allyTgt);
@@ -1085,14 +1085,14 @@ function TR4({teamId,team,teams,attacks,wars,allocateSafe,lockSafes,queueAttack,
                 <div style={{fontSize:12,marginBottom:8,color:"#fde047"}}>🤝 Recruit an Ally for this defense:</div>
                 {proposalTo ? (
                   <div style={{fontSize:12,opacity:.7}}>
-                    ⏳ Waiting for <strong style={{color:"#fde047"}}>{TC[proposalTo].name}</strong>...
+                    ⏳ Waiting for <strong style={{color:"#fde047"}}>{TC[proposalTo]?.name}</strong>...
                     <button className="btn" onClick={()=>cancelAllianceProposal(teamId)} style={{marginLeft:12,padding:"4px 8px",fontSize:9}}>Cancel</button>
                   </div>
                 ) : (
                   <div style={{display:"flex",gap:8}}>
                     <select value={allyTgt} onChange={e=>setAllyTgt(e.target.value)} style={{maxWidth:200}}>
                       <option value="">Select ally...</option>
-                      {IDS.filter(t=>t!==teamId && t!==activeWar.defender && !teams[t].allianceWith).map(t=><option key={t} value={t}>{TC[t].em} {TC[t].name}</option>)}
+                      {IDS.filter(t=>t!==teamId && t!==activeWar.attacker && !teams[t]?.allianceWith).map(t=><option key={t} value={t}>{TC[t].em} {TC[t].name}</option>)}
                     </select>
                     <button className="btn" disabled={!allyTgt} onClick={()=>{
                       proposeAlliance(teamId, allyTgt);
