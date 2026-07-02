@@ -454,7 +454,7 @@ function R3Admin({teams,locked,lockStrategies}){
 /* ═══════════════════════════════════════════════
    ADMIN — ROUND 4
    ═══════════════════════════════════════════════ */
-function R4Admin({teams,attacks,approveAtk,rejectAtk,alliances,wars,concludeWar}){
+function R4Admin({teams,attacks,approveAtk,rejectAtk,alliances,wars,concludeWar,round}){
   const atksArr=Object.values(attacks||{});
   const pending=atksArr.filter(a=>a.status==="pending");
   const resolved=atksArr.filter(a=>a.status!=="pending");
@@ -484,7 +484,7 @@ function R4Admin({teams,attacks,approveAtk,rejectAtk,alliances,wars,concludeWar}
                 Missiles: <span style={{color:"#fde047"}}>{availM}</span> / {totalM} avail
               </div>
               <div style={{display:"flex",gap:4}}>
-                {(tm.safes||[0,0,0,0,0]).map((g,i)=>(
+                {Array.from({length:5}, (_,i)=>(tm.safes?.[i]||0)).map((g,i)=>(
                   <div key={i} style={{flex:1,padding:"5px 3px",borderRadius:4,textAlign:"center",
                     background:(tm.safeStatus||[])[i]==="destroyed"?"rgba(255,0,0,.1)":`rgba(${cfg.rgb},.08)`,
                     border:`1px solid ${(tm.safeStatus||[])[i]==="destroyed"?"rgba(255,0,0,.3)":`rgba(${cfg.rgb},.2)`}`,fontSize:9}}>
@@ -697,7 +697,7 @@ function AdminPanel({round,teams,locked,logs,attacks,snap,alliances,wars,handler
           {tab===1&&<R1Admin teams={teams} toggleQ={toggleQ} toggleHint={toggleHint} toggleSkip={toggleSkip} addAttempt={addAttempt}/>}
           {tab===2&&<R2Admin teams={teams} setZOpt={setZOpt} giveDiplomacy={giveDiplomacy}/>}
           {tab===3&&<R3Admin teams={teams} locked={locked} lockStrategies={lockStrategies}/>}
-          {tab===4&&<R4Admin teams={teams} attacks={attacks} approveAtk={approveAtk} rejectAtk={rejectAtk} alliances={alliances} wars={wars} concludeWar={concludeWar}/>}
+          {tab===4&&<R4Admin teams={teams} attacks={attacks} approveAtk={approveAtk} rejectAtk={rejectAtk} alliances={alliances} wars={wars} concludeWar={concludeWar} round={round}/>}
         </div>
       </div>
 
@@ -883,11 +883,11 @@ function TR4({teamId,team,teams,attacks,wars,allocateSafe,lockSafes,queueAttack,
   const { wageWar, proposeAlliance, cancelAllianceProposal, acceptAlliance, declineAlliance, allocateSafeHp } = handlers;
   
   const cfg=TC[teamId];
-  const safes=team.safes||[0,0,0,0,0];
-  const safeHp=team.safeHp||[0,0,0,0,0];
-  const safeStatus=team.safeStatus||["ok","ok","ok","ok","ok"];
-  const sumG=safes.reduce((a,b)=>a+b,0);
-  const sumH=safeHp.reduce((a,b)=>a+b,0);
+  const safes = Array.from({length:5}, (_,i)=>(team.safes?.[i]||0));
+  const safeHp = Array.from({length:5}, (_,i)=>(team.safeHp?.[i]||0));
+  const safeStatus = Array.from({length:5}, (_,i)=>(team.safeStatus?.[i]||"ok"));
+  const sumG = safes.reduce((a,b)=>a+(Number(b)||0), 0);
+  const sumH = safeHp.reduce((a,b)=>a+(Number(b)||0), 0);
   
   const [warTgt, setWarTgt] = useState("");
   const [allyTgt, setAllyTgt] = useState("");
