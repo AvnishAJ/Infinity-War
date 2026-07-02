@@ -59,8 +59,12 @@ const mkAlliance = (idA, idB, gold, hp) => ({
   sealed:false, used:false, formedAt:Date.now(),
 });
 
-function getTeamHp(team) {
+function getTeamHp(team, round) {
   if (!team) return 0;
+  if (round === 4) {
+    const safeHp = team.safeHp || [0, 0, 0, 0, 0];
+    return team.safesLocked ? safeHp.reduce((a, b) => a + b, 0) : 3100;
+  }
   const base = team.hp || 0;
   const extra = team.strategy === "PASSIVE" ? 2500 : 0;
   return base + extra;
@@ -76,7 +80,7 @@ function allianceLabel(a){
   if(!a) return "Unknown Alliance";
   return `${TC[a.members[0]].name} + ${TC[a.members[1]].name}`;
 }
-function getSide(type,id,teams,alliances){
+function getSide(type,id,teams,alliances,round){
   if(type==="alliance"){
     const a=alliances[id]; if(!a) return null;
     return { type:"alliance", id, gold:a.gold, hp:a.hp,
@@ -84,7 +88,7 @@ function getSide(type,id,teams,alliances){
       name:allianceLabel(a), color:"#fde047", em:"🤝" };
   }
   const t=teams[id]; if(!t) return null;
-  return { type:"team", id, gold:t.gold, hp:getTeamHp(t),
+  return { type:"team", id, gold:t.gold, hp:getTeamHp(t,round),
     safes:t.safes||[0,0,0,0,0], safeHp:t.safeHp||[0,0,0,0,0], safeStatus:t.safeStatus||["ok","ok","ok","ok","ok"],
     name:TC[id].name, color:TC[id].color, em:TC[id].em };
 }
@@ -473,7 +477,7 @@ function R4Admin({teams,attacks,approveAtk,rejectAtk,alliances,wars,concludeWar}
               <div style={{display:"flex",gap:6,alignItems:"center",marginBottom:8}}>
                 <span style={{fontSize:14}}>{cfg.em}</span>
                 <span className="ob" style={{color:cfg.color,fontSize:10}}>{cfg.name}</span>
-                <span style={{marginLeft:"auto",fontSize:10,color:"#00ff88"}}>{getTeamHp(tm)} HP</span>
+                <span style={{marginLeft:"auto",fontSize:10,color:"#00ff88"}}>{getTeamHp(tm, round)} HP</span>
                 <span style={{fontSize:10,opacity:.5}}>{tm.safesLocked?"🔒":"⚠️"}</span>
               </div>
               <div style={{fontSize:10,opacity:.6,marginBottom:6}}>
@@ -513,6 +517,12 @@ function R4Admin({teams,attacks,approveAtk,rejectAtk,alliances,wars,concludeWar}
                 )}
                 <span style={{opacity:.5,fontSize:12}}>WAGED WAR ON</span>
                 <span style={{color:TC[w.defender].color,fontWeight:700}}>{TC[w.defender].em} {TC[w.defender].name}</span>
+                {w.defenderAlly && (
+                  <>
+                    <span>+</span>
+                    <span style={{color:TC[w.defenderAlly].color,fontWeight:700}}>{TC[w.defenderAlly].em} {TC[w.defenderAlly].name} (Ally)</span>
+                  </>
+                )}
               </div>
               <button className="btn" onClick={()=>concludeWar(w.id)} style={{background:"rgba(255,255,255,.08)",color:"#fff",border:"1px solid rgba(255,255,255,.2)"}}>🏁 CONCLUDE WAR</button>
             </div>
@@ -524,8 +534,8 @@ function R4Admin({teams,attacks,approveAtk,rejectAtk,alliances,wars,concludeWar}
         <div className="ob" style={{fontSize:11,letterSpacing:2,color:"#ff6666",marginBottom:10}}>⚔️ CIPHER QUEUE ({pending.length})</div>
         {pending.length===0&&<div style={{opacity:.35,fontSize:13,padding:"10px 0"}}>No attacks queued.</div>}
         {pending.map(atk=>{
-          const aSide=getSide(atk.attackerType,atk.attackerId,teams,alliances);
-          const dSide=getSide(atk.targetType,atk.targetId,teams,alliances);
+          const aSide=getSide(atk.attackerType,atk.attackerId,teams,alliances,round);
+          const dSide=getSide(atk.targetType,atk.targetId,teams,alliances,round);
           if(!aSide||!dSide) return null;
           return (
             <div key={atk.id} style={{border:"1px solid rgba(255,100,0,.3)",background:"rgba(255,50,0,.05)",
@@ -553,8 +563,8 @@ function R4Admin({teams,attacks,approveAtk,rejectAtk,alliances,wars,concludeWar}
         <div>
           <div className="ob" style={{fontSize:10,letterSpacing:2,opacity:.4,marginBottom:6}}>RESOLVED ({resolved.length})</div>
           {resolved.slice(-5).reverse().map(atk=>{
-            const aSide=getSide(atk.attackerType,atk.attackerId,teams,alliances);
-            const dSide=getSide(atk.targetType,atk.targetId,teams,alliances);
+            const aSide=getSide(atk.attackerType,atk.attackerId,teams,alliances,round);
+            const dSide=getSide(atk.targetType,atk.targetId,teams,alliances,round);
             if(!aSide||!dSide) return null;
             return (
               <div key={atk.id} style={{fontSize:12,padding:"5px 8px",borderBottom:"1px solid rgba(255,255,255,.04)",display:"flex",gap:6,opacity:.6}}>
@@ -574,7 +584,7 @@ function R4Admin({teams,attacks,approveAtk,rejectAtk,alliances,wars,concludeWar}
           {resolvedWars.map(w=>(
             <div key={w.id} style={{fontSize:12,padding:"5px 8px",borderBottom:"1px solid rgba(255,255,255,.04)",display:"flex",gap:6,opacity:.5}}>
               <span>🏁</span>
-              <span>{TC[w.attacker].name} {w.attackerAlly ? `+ ${TC[w.attackerAlly].name}` : ""} vs {TC[w.defender].name} (Concluded)</span>
+              <span>{TC[w.attacker].name} {w.attackerAlly ? `+ ${TC[w.attackerAlly].name}` : ""} vs {TC[w.defender].name} {w.defenderAlly ? `+ ${TC[w.defenderAlly].name}` : ""} (Concluded)</span>
             </div>
           ))}
         </div>
@@ -597,7 +607,7 @@ function AdminPanel({round,teams,locked,logs,attacks,snap,alliances,wars,handler
     {id:3,label:"R3 · STRATEGY",col:"#ff8c00"},
     {id:4,label:"R4 · ENDGAME", col:"#ff3333"},
   ];
-  const maxHp=Math.max(...IDS.map(t=>teams[t].hp),1);
+  const maxHp=Math.max(...IDS.map(t=>getTeamHp(teams[t], round)),1);
   const top3=[...IDS].sort((a,b)=>teams[b].gold-teams[a].gold).slice(0,3);
   const logsArr=Object.values(logs||{}).sort((a,b)=>b.ts-a.ts).slice(0,60);
   return (
@@ -649,7 +659,7 @@ function AdminPanel({round,teams,locked,logs,attacks,snap,alliances,wars,handler
                   <span className="ob" style={{color:cfg.color,fontSize:10}}>{cfg.name}</span>
                 </div>
                 <GoldBadge gold={tm.gold}/>
-                <div style={{flex:1,minWidth:130}}><HPBar hp={tm.hp} maxHp={maxHp} color={cfg.color}/></div>
+                <div style={{flex:1,minWidth:130}}><HPBar hp={getTeamHp(tm, round)} maxHp={maxHp} color={cfg.color}/></div>
                 <div style={{minWidth:80,textAlign:"center"}}>
                   {tm.strategy?(
                     <span style={{padding:"3px 9px",borderRadius:20,fontSize:11,fontWeight:600,
@@ -771,7 +781,7 @@ function TR2({teamId,team,allTeams,giveDiplomacy,showToast}){
           :<div style={{fontSize:12,opacity:.35,marginTop:5}}>Awaiting admin to enter Z<sub>opt</sub>…</div>}
         <div style={{marginTop:12,padding:10,borderRadius:8,background:"rgba(0,212,255,.06)",
           border:"1px solid rgba(0,212,255,.15)",fontSize:12,opacity:.8}}>
-          💡 In Round 4, your safes automatically receive hitpoints equal to your total HP.
+          💡 In Round 4, you receive 3,100 total hitpoints and distribute them across your 5 safes.
         </div>
       </div>
       {team.hp>0&&(
@@ -870,13 +880,14 @@ function TR3({teamId,team,locked,setStrategy}){
    TEAM — ROUND 4
    ═══════════════════════════════════════════════ */
 function TR4({teamId,team,teams,attacks,wars,allocateSafe,lockSafes,queueAttack,showToast,handlers}){
-  const { wageWar, proposeAlliance, cancelAllianceProposal, acceptAlliance, declineAlliance } = handlers;
+  const { wageWar, proposeAlliance, cancelAllianceProposal, acceptAlliance, declineAlliance, allocateSafeHp } = handlers;
   
   const cfg=TC[teamId];
   const safes=team.safes||[0,0,0,0,0];
   const safeHp=team.safeHp||[0,0,0,0,0];
   const safeStatus=team.safeStatus||["ok","ok","ok","ok","ok"];
   const sumG=safes.reduce((a,b)=>a+b,0);
+  const sumH=safeHp.reduce((a,b)=>a+b,0);
   
   const [warTgt, setWarTgt] = useState("");
   const [allyTgt, setAllyTgt] = useState("");
@@ -889,6 +900,8 @@ function TR4({teamId,team,teams,attacks,wars,allocateSafe,lockSafes,queueAttack,
   const doLock=()=>{
     if(sumG!==team.gold){
       setErrG(`Gold mismatch: ${sumG.toLocaleString()} ≠ ${team.gold.toLocaleString()}.`);
+    } else if(sumH!==3100){
+      setErrG(`HP mismatch: ${sumH.toLocaleString()} ≠ 3,100.`);
     } else {
       setErrG("");
       lockSafes(teamId);
@@ -901,30 +914,36 @@ function TR4({teamId,team,teams,attacks,wars,allocateSafe,lockSafes,queueAttack,
     .reduce((s, a) => s + (a.missiles || 0), 0);
   const availMissiles = Math.max(0, totalMissiles - usedMissiles);
 
-  const activeWar = Object.values(wars || {}).find(w => w.status === "active" && (w.attacker === teamId || w.defender === teamId || w.attackerAlly === teamId));
+  const activeWar = Object.values(wars || {}).find(w => w.status === "active" && (w.attacker === teamId || w.defender === teamId || w.attackerAlly === teamId || w.defenderAlly === teamId));
 
   let warRole = null;
   if (activeWar) {
     if (activeWar.attacker === teamId) warRole = "attacker";
     else if (activeWar.defender === teamId) warRole = "defender";
-    else if (activeWar.attackerAlly === teamId) warRole = "ally";
+    else if (activeWar.attackerAlly === teamId || activeWar.defenderAlly === teamId) warRole = "ally";
   }
 
   const proposalFrom = team.allianceProposalFrom;
   const proposalTo = team.allianceProposalTo;
+
+  const proposerWar = proposalFrom
+    ? Object.values(wars || {}).find(w => w.status === "active" && (w.attacker === proposalFrom || w.defender === proposalFrom))
+    : null;
+  const opponentId = proposerWar
+    ? (proposerWar.attacker === proposalFrom ? proposerWar.defender : proposerWar.attacker)
+    : null;
 
   return (
     <div style={{display:"flex",flexDirection:"column",gap:20}}>
       <div>
         <div className="ob" style={{fontSize:11,letterSpacing:3,color:cfg.color,opacity:.7,marginBottom:14}}>VIBRANIUM VAULT ALLOCATION</div>
         <div style={{fontSize:12,opacity:.6,marginBottom:14,lineHeight:1.5}}>
-          Distribute your <span style={{color:"#fde047",fontWeight:700}}>{team.gold.toLocaleString()} Au</span> across your 5 safes.
-          Each safe's hitpoints is automatically set to <span style={{color:"#00ff88",fontWeight:700}}>{getTeamHp(team)} HP</span>.
+          Distribute your <span style={{color:"#fde047",fontWeight:700}}>{team.gold.toLocaleString()} Au</span> and <span style={{color:"#00ff88",fontWeight:700}}>3,100 HP</span> across your 5 safes.
         </div>
         <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:10,marginBottom:12}}>
           {safes.map((g,i)=>{
             const destr=safeStatus[i]==="destroyed";
-            const shp=safeHp[i]||getTeamHp(team);
+            const shp=safeHp[i]||0;
             return (
               <div key={i} style={{padding:"12px 8px",borderRadius:8,textAlign:"center",position:"relative",
                 border:`2px solid ${destr?"rgba(255,0,0,.35)":`rgba(${cfg.rgb},${team.safesLocked?.25:.15})`}`,
@@ -937,7 +956,11 @@ function TR4({teamId,team,teams,attacks,wars,allocateSafe,lockSafes,queueAttack,
                 <div style={{fontSize:18}}>🔐</div>
                 <div className="ob" style={{fontSize:9,opacity:.5,margin:"4px 0"}}>SAFE {i+1}</div>
                 <div style={{fontSize:9,color:"#00ff88",marginBottom:3}}>HP shield</div>
-                <div style={{color:"#00ff88",fontWeight:700,fontSize:12,marginBottom:4}}>{shp} HP</div>
+                {team.safesLocked
+                  ?<div style={{color:"#00ff88",fontWeight:700,fontSize:12,marginBottom:4}}>{shp.toLocaleString()} HP</div>
+                  :<input type="number" min="0" value={safeHp[i]||""} placeholder="0"
+                    onChange={e=>allocateSafeHp(teamId,i,e.target.value)}
+                    style={{textAlign:"center",padding:"4px 2px",fontSize:11,borderColor:"rgba(0,255,136,.3)",marginBottom:4}}/>}
                 <div style={{fontSize:9,color:"#fde047",marginBottom:3}}>Gold</div>
                 {team.safesLocked
                   ?<div style={{color:"#fde047",fontWeight:700,fontSize:12}}>{g.toLocaleString()}g</div>
@@ -948,10 +971,14 @@ function TR4({teamId,team,teams,attacks,wars,allocateSafe,lockSafes,queueAttack,
             );
           })}
         </div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr",gap:10,marginBottom:8}}>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:8}}>
           <div style={{padding:"8px 12px",borderRadius:6,background:"rgba(253,224,71,.05)",border:"1px solid rgba(253,224,71,.15)"}}>
             <div style={{fontSize:11,color:"#fde047",marginBottom:2}}>Gold Allocated</div>
             <div style={{fontSize:14,fontWeight:700,color:sumG===team.gold?"#fde047":"#ff5555"}}>{sumG.toLocaleString()} / {team.gold.toLocaleString()}</div>
+          </div>
+          <div style={{padding:"8px 12px",borderRadius:6,background:"rgba(0,255,136,.05)",border:"1px solid rgba(0,255,136,.15)"}}>
+            <div style={{fontSize:11,color:"#00ff88",marginBottom:2}}>HP Allocated</div>
+            <div style={{fontSize:14,fontWeight:700,color:sumH===3100?"#00ff88":"#ff5555"}}>{sumH.toLocaleString()} / 3,100</div>
           </div>
         </div>
         {!team.safesLocked&&<button className="btn" onClick={doLock}
@@ -962,6 +989,50 @@ function TR4({teamId,team,teams,attacks,wars,allocateSafe,lockSafes,queueAttack,
 
       <div style={{borderTop:"1px solid rgba(255,255,255,.07)",paddingTop:18}}>
         <div className="ob" style={{fontSize:11,letterSpacing:3,color:"#ff3333",opacity:.85,marginBottom:14}}>⚔️ BATTLE GROUND</div>
+
+        {!activeWar && (
+          <div>
+            {team.strategy === "AGGRESSIVE" ? (
+              <div style={{background:"rgba(255,255,255,.02)", border:"1px solid rgba(255,255,255,.08)", borderRadius:8, padding:14}}>
+                <div style={{fontSize:13,marginBottom:12}}>You are <strong style={{color:"#ff6666"}}>AGGRESSIVE</strong>. Choose a team to wage war against.</div>
+                <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                  <select value={warTgt} onChange={e=>setWarTgt(e.target.value)} style={{maxWidth:250}}>
+                    <option value="">Select target...</option>
+                    {IDS.filter(t=>t!==teamId).map(t=><option key={t} value={t}>{TC[t].em} {TC[t].name}</option>)}
+                  </select>
+                  <button className="btn" disabled={!warTgt} onClick={()=>{
+                    wageWar(teamId, warTgt);
+                    setWarTgt("");
+                  }} style={{background:"rgba(255,50,50,.2)",color:"#ff6666",border:"1px solid #ff333344"}}>⚔️ WAGE WAR</button>
+                </div>
+              </div>
+            ) : (
+              <div style={{padding:14,borderRadius:8,background:"rgba(0,200,100,.06)",border:"1px solid rgba(0,200,100,.18)"}}>
+                🛡️ Defensive stance — waiting for someone to declare war or send an alliance request.
+              </div>
+            )}
+          </div>
+        )}
+
+        {proposalFrom && (
+          <div style={{marginBottom:18,background:"rgba(253,224,71,.08)",border:"1px solid rgba(253,224,71,.3)",padding:12,borderRadius:8}}>
+            <div style={{fontSize:13,marginBottom:10}}>
+              {opponentId ? (
+                <span>
+                  <strong style={{color:"#fde047"}}>{TC[proposalFrom].em} {TC[proposalFrom].name}</strong> requests your alliance in their war against <strong style={{color:TC[opponentId].color}}>{TC[opponentId].name}</strong>!
+                </span>
+              ) : (
+                <span>
+                  <strong style={{color:"#fde047"}}>{TC[proposalFrom].em} {TC[proposalFrom].name}</strong> requests your alliance!
+                </span>
+              )}
+            </div>
+            <div style={{display:"flex",gap:8}}>
+              <button className="btn" onClick={()=>acceptAlliance(teamId)} style={{background:"rgba(0,200,100,.15)",color:"#00ff88",border:"1px solid #00ff8844"}}>✅ ACCEPT</button>
+              <button className="btn" onClick={()=>declineAlliance(teamId)} style={{background:"rgba(255,50,50,.15)",color:"#ff6666",border:"1px solid #ff333344"}}>❌ DECLINE</button>
+            </div>
+          </div>
+        )}
 
         {!activeWar && (
           <div>
@@ -1000,6 +1071,12 @@ function TR4({teamId,team,teams,attacks,wars,allocateSafe,lockSafes,queueAttack,
               )}
               <span style={{opacity:.5,fontSize:12}}>vs</span>
               <span style={{color:TC[activeWar.defender].color}}>{TC[activeWar.defender].em} {TC[activeWar.defender].name}</span>
+              {activeWar.defenderAlly && (
+                <>
+                  <span>+</span>
+                  <span style={{color:TC[activeWar.defenderAlly].color}}>{TC[activeWar.defenderAlly].em} {TC[activeWar.defenderAlly].name}</span>
+                </>
+              )}
             </div>
 
             {warRole === "attacker" && !activeWar.attackerAlly && (
@@ -1025,15 +1102,26 @@ function TR4({teamId,team,teams,attacks,wars,allocateSafe,lockSafes,queueAttack,
               </div>
             )}
 
-            {proposalFrom && !activeWar.attackerAlly && (
-              <div style={{marginBottom:18,background:"rgba(253,224,71,.08)",border:"1px solid rgba(253,224,71,.3)",padding:12,borderRadius:8}}>
-                <div style={{fontSize:13,marginBottom:10}}>
-                  <strong style={{color:"#fde047"}}>{TC[proposalFrom].em} {TC[proposalFrom].name}</strong> requests your alliance in their war against <strong style={{color:TC[activeWar.defender].color}}>{TC[activeWar.defender].name}</strong>!
-                </div>
-                <div style={{display:"flex",gap:8}}>
-                  <button className="btn" onClick={()=>acceptAlliance(teamId)} style={{background:"rgba(0,200,100,.15)",color:"#00ff88",border:"1px solid #00ff8844"}}>✅ ACCEPT</button>
-                  <button className="btn" onClick={()=>declineAlliance(teamId)} style={{background:"rgba(255,50,50,.15)",color:"#ff6666",border:"1px solid #ff333344"}}>❌ DECLINE</button>
-                </div>
+            {warRole === "defender" && !activeWar.defenderAlly && (
+              <div style={{marginBottom:18,background:"rgba(253,224,71,.04)",border:"1px solid rgba(253,224,71,.15)",padding:12,borderRadius:8}}>
+                <div style={{fontSize:12,marginBottom:8,color:"#fde047"}}>🤝 Recruit an Ally for this defense:</div>
+                {proposalTo ? (
+                  <div style={{fontSize:12,opacity:.7}}>
+                    ⏳ Waiting for <strong style={{color:"#fde047"}}>{TC[proposalTo].name}</strong>...
+                    <button className="btn" onClick={()=>cancelAllianceProposal(teamId)} style={{marginLeft:12,padding:"4px 8px",fontSize:9}}>Cancel</button>
+                  </div>
+                ) : (
+                  <div style={{display:"flex",gap:8}}>
+                    <select value={allyTgt} onChange={e=>setAllyTgt(e.target.value)} style={{maxWidth:200}}>
+                      <option value="">Select ally...</option>
+                      {IDS.filter(t=>t!==teamId && t!==activeWar.attacker && !teams[t].allianceWith).map(t=><option key={t} value={t}>{TC[t].em} {TC[t].name}</option>)}
+                    </select>
+                    <button className="btn" disabled={!allyTgt} onClick={()=>{
+                      proposeAlliance(teamId, allyTgt);
+                      setAllyTgt("");
+                    }} style={{background:"rgba(253,224,71,.15)",color:"#fde047",border:"1px solid rgba(253,224,71,.3)"}}>🤝 PROPOSE ALLIANCE</button>
+                  </div>
+                )}
               </div>
             )}
 
@@ -1045,29 +1133,43 @@ function TR4({teamId,team,teams,attacks,wars,allocateSafe,lockSafes,queueAttack,
                 </div>
               </div>
 
-              {(warRole === "attacker" || warRole === "ally") && (
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr auto",gap:10,alignItems:"flex-end"}}>
-                  <div>
-                    <div style={{fontSize:11,opacity:.5,marginBottom:4}}>Target Safe ({TC[activeWar.defender].name})</div>
-                    <select value={atkSafe} onChange={e=>setAtkSafe(e.target.value)}>
-                      {[0,1,2,3,4].map(i=><option key={i} value={i} disabled={(teams[activeWar.defender].safeStatus||[])[i]==="destroyed"}>Safe #{i+1} {(teams[activeWar.defender].safeStatus||[])[i]==="destroyed"?"(💥)":""}</option>)}
-                    </select>
+              {(teamId === activeWar.attacker || teamId === activeWar.attackerAlly) && (
+                <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr auto",gap:10,alignItems:"flex-end"}}>
+                    <div>
+                      <div style={{fontSize:11,opacity:.5,marginBottom:4}}>Target Team</div>
+                      <select value={atkTeamTgt} onChange={e=>setAtkTeamTgt(e.target.value)}>
+                        <option value="">Choose team...</option>
+                        <option value={activeWar.defender}>{TC[activeWar.defender].em} {TC[activeWar.defender].name}</option>
+                        {activeWar.defenderAlly && <option value={activeWar.defenderAlly}>{TC[activeWar.defenderAlly].em} {TC[activeWar.defenderAlly].name} (Ally)</option>}
+                      </select>
+                    </div>
+                    <div>
+                      <div style={{fontSize:11,opacity:.5,marginBottom:4}}>Target Safe</div>
+                      <select value={atkSafe} onChange={e=>setAtkSafe(e.target.value)}>
+                        {[0,1,2,3,4].map(i=>{
+                          const tStatus = atkTeamTgt ? (teams[atkTeamTgt]?.safeStatus || [])[i] : null;
+                          return <option key={i} value={i} disabled={tStatus==="destroyed"}>Safe #{i+1} {tStatus==="destroyed"?"(💥)":""}</option>;
+                        })}
+                      </select>
+                    </div>
+                    <div>
+                      <div style={{fontSize:11,opacity:.5,marginBottom:4}}>Missiles</div>
+                      <input type="number" min="1" max={availMissiles} value={atkMissiles} onChange={e=>setAtkMissiles(e.target.value)}/>
+                    </div>
+                    <button className="btn" disabled={availMissiles<=0 || !atkTeamTgt || !team.safesLocked} onClick={()=>{
+                      const m = parseInt(atkMissiles);
+                      if(!atkTeamTgt) return showToast("Select target team!", "warning");
+                      if(!m || m <= 0) return showToast("Enter a valid missile count!","warning");
+                      if(m > availMissiles) return showToast(`Only ${availMissiles} missiles left!`,"danger");
+                      queueAttack(teamId, atkTeamTgt, parseInt(atkSafe), m);
+                      setAtkMissiles("1");
+                    }} style={{background:"rgba(255,50,50,.2)",color:"#ff6666",border:"1px solid #ff333344"}}>🚀 LAUNCH</button>
                   </div>
-                  <div>
-                    <div style={{fontSize:11,opacity:.5,marginBottom:4}}>Number of Missiles</div>
-                    <input type="number" min="1" max={availMissiles} value={atkMissiles} onChange={e=>setAtkMissiles(e.target.value)}/>
-                  </div>
-                  <button className="btn" disabled={availMissiles<=0 || !team.safesLocked} onClick={()=>{
-                    const m = parseInt(atkMissiles);
-                    if(!m || m <= 0) return showToast("Enter a valid missile count!","warning");
-                    if(m > availMissiles) return showToast(`Only ${availMissiles} missiles left!`,"danger");
-                    queueAttack(teamId, activeWar.defender, parseInt(atkSafe), m);
-                    setAtkMissiles("1");
-                  }} style={{background:"rgba(255,50,50,.2)",color:"#ff6666",border:"1px solid #ff333344"}}>🚀 LAUNCH</button>
                 </div>
               )}
 
-              {warRole === "defender" && (
+              {(teamId === activeWar.defender || teamId === activeWar.defenderAlly) && (
                 <div style={{display:"flex",flexDirection:"column",gap:10}}>
                   <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr auto",gap:10,alignItems:"flex-end"}}>
                     <div>
@@ -1195,7 +1297,7 @@ function TeamPanel({teamId,round,teams,locked,alliances,attacks,wars,handlers}){
   useEffect(()=>{setShopOpen(false);setTab(Math.min(round,4));},[teamId]);
 
   const TABS=[{id:1,l:"SCRAMBLE"},{id:2,l:"FORTIFY"},{id:3,l:"STRATEGY"},{id:4,l:"ENDGAME"}];
-  const maxHp=Math.max(...IDS.map(t=>teams[t].hp),1);
+  const maxHp=Math.max(...IDS.map(t=>getTeamHp(teams[t], round)),1);
 
   return (
     <div style={{display:"flex",flexDirection:"column",gap:18,position:"relative"}}>
@@ -1231,7 +1333,7 @@ function TeamPanel({teamId,round,teams,locked,alliances,attacks,wars,handlers}){
           </div>
           <div style={{marginLeft:"auto",display:"flex",gap:22,flexWrap:"wrap",alignItems:"center"}}>
             <div><div style={{fontSize:10,opacity:.45,letterSpacing:1,marginBottom:3}}>GOLD</div><GoldBadge gold={team.gold}/></div>
-            <div style={{minWidth:160}}><HPBar hp={team.hp} maxHp={maxHp} color={cfg.color}/></div>
+            <div style={{minWidth:160}}><HPBar hp={getTeamHp(team, round)} maxHp={maxHp} color={cfg.color}/></div>
             {team.strategy&&<div>
               <div style={{fontSize:10,opacity:.45,marginBottom:4}}>STANCE</div>
               <span style={{padding:"4px 11px",borderRadius:20,fontSize:11,fontWeight:700,
@@ -1429,9 +1531,17 @@ export default function App(){
     fbSet(`game/teams/${teamId}/allianceProposalTo`,null);
     fbSet(`game/teams/${teamId}/allianceProposalFrom`,null);
 
-    const activeWar = Object.values(gameState.wars || {}).find(w => w.status === 'active' && w.attacker === fromId);
+    const activeWar = Object.values(gameState.wars || {}).find(w => w.status === 'active' && (w.attacker === fromId || w.defender === fromId || w.attacker === teamId || w.defender === teamId));
     if(activeWar) {
-      fbSet(`game/wars/${activeWar.id}/attackerAlly`, teamId);
+      if (activeWar.attacker === fromId) {
+        fbSet(`game/wars/${activeWar.id}/attackerAlly`, teamId);
+      } else if (activeWar.defender === fromId) {
+        fbSet(`game/wars/${activeWar.id}/defenderAlly`, teamId);
+      } else if (activeWar.attacker === teamId) {
+        fbSet(`game/wars/${activeWar.id}/attackerAlly`, fromId);
+      } else if (activeWar.defender === teamId) {
+        fbSet(`game/wars/${activeWar.id}/defenderAlly`, fromId);
+      }
     }
 
     addLog(`🤝 ALLIANCE FORMED: ${TC[fromId].name} + ${TC[teamId].name}`);
@@ -1468,8 +1578,8 @@ export default function App(){
     const tm=gameState.teams[tid];
     const sumG=(tm.safes||[]).reduce((a,b)=>a+b,0);
     if(sumG!==tm.gold)return;
-    const hp = getTeamHp(tm);
-    fbSet(`game/teams/${tid}/safeHp`, [hp, hp, hp, hp, hp]);
+    const sumH=(tm.safeHp||[]).reduce((a,b)=>a+b,0);
+    if(sumH!==3100)return;
     fbSet(`game/teams/${tid}/safesLocked`,true);
     addLog(`${TC[tid].name}: Vaults sealed.`);
   },[gameState.teams,addLog]);
@@ -1513,6 +1623,7 @@ export default function App(){
       attacker: attackerId,
       defender: defenderId,
       attackerAlly: null,
+      defenderAlly: null,
       status: "active",
       createdAt: Date.now()
     });
@@ -1535,6 +1646,11 @@ export default function App(){
       fbSet(`game/teams/${war.attackerAlly}/allianceProposalTo`, null);
       fbSet(`game/teams/${war.attackerAlly}/allianceProposalFrom`, null);
     }
+    if(war.defenderAlly) {
+      fbSet(`game/teams/${war.defenderAlly}/allianceWith`, null);
+      fbSet(`game/teams/${war.defenderAlly}/allianceProposalTo`, null);
+      fbSet(`game/teams/${war.defenderAlly}/allianceProposalFrom`, null);
+    }
     addLog(`🏁 WAR CONCLUDED: The war between ${TC[war.attacker].name} and ${TC[war.defender].name} has finished.`);
     toast_("War concluded.", "info");
   },[gameState.wars, addLog]);
@@ -1549,8 +1665,8 @@ export default function App(){
   },[addLog]);
 
   const approveAtk=useCallback((atk)=>{
-    const attSide=getSide("team",atk.attackerId,gameState.teams,gameState.alliances);
-    const defSide=getSide("team",atk.targetId,gameState.teams,gameState.alliances);
+    const attSide=getSide("team",atk.attackerId,gameState.teams,gameState.alliances,gameState.round);
+    const defSide=getSide("team",atk.targetId,gameState.teams,gameState.alliances,gameState.round);
     if(!attSide||!defSide)return;
 
     const attPath=`game/teams/${atk.attackerId}`;
