@@ -1619,10 +1619,6 @@ export default function App(){
     if(sumG!==a.gold||sumH!==a.hp){toast_("Alliance totals don't match!","danger");return;}
     fbSet(`game/alliances/${allianceId}/sealed`,true);
     const [m1,m2]=a.members;
-    fbSet(`game/teams/${m1}/gold`,0);
-    fbSet(`game/teams/${m1}/hp`,0);
-    fbSet(`game/teams/${m2}/gold`,0);
-    fbSet(`game/teams/${m2}/hp`,0);
     addLog(`🤝 Alliance vault sealed: ${TC[m1].name}+${TC[m2].name} — ${a.gold}Au / ${a.hp}HP committed.`);
     toast_("🤝 Alliance vault sealed! Ready to strike.","success");
   },[gameState.alliances,addLog]);
@@ -1732,6 +1728,10 @@ export default function App(){
       defSafes[atk.safeIdx]=0;
       defSafeStatus[atk.safeIdx]="destroyed";
       attGold+=stolen;
+      if (stolen > 0) {
+        if (atk.attackerType === "alliance") fbSet(`${attPath}/sealed`, false);
+        else fbSet(`${attPath}/safesLocked`, false);
+      }
       defGold=Math.max(0,defGold-stolen);
       msg=`💥 ${attSide.name} destroyed ${defSide.name}'s Safe #${atk.safeIdx+1} using ${atk.missiles} missiles! ${stolen.toLocaleString()} Au seized!`;
       typ="danger";
