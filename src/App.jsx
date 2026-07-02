@@ -1673,18 +1673,22 @@ export default function App(){
     fbSet(`game/teams/${war.attacker}/allianceWith`, null);
     fbSet(`game/teams/${war.attacker}/allianceProposalTo`, null);
     fbSet(`game/teams/${war.attacker}/allianceProposalFrom`, null);
+    fbSet(`game/teams/${war.attacker}/safesLocked`, false);
     fbSet(`game/teams/${war.defender}/allianceWith`, null);
     fbSet(`game/teams/${war.defender}/allianceProposalTo`, null);
     fbSet(`game/teams/${war.defender}/allianceProposalFrom`, null);
+    fbSet(`game/teams/${war.defender}/safesLocked`, false);
     if(war.attackerAlly) {
       fbSet(`game/teams/${war.attackerAlly}/allianceWith`, null);
       fbSet(`game/teams/${war.attackerAlly}/allianceProposalTo`, null);
       fbSet(`game/teams/${war.attackerAlly}/allianceProposalFrom`, null);
+      fbSet(`game/teams/${war.attackerAlly}/safesLocked`, false);
     }
     if(war.defenderAlly) {
       fbSet(`game/teams/${war.defenderAlly}/allianceWith`, null);
       fbSet(`game/teams/${war.defenderAlly}/allianceProposalTo`, null);
       fbSet(`game/teams/${war.defenderAlly}/allianceProposalFrom`, null);
+      fbSet(`game/teams/${war.defenderAlly}/safesLocked`, false);
     }
     addLog(`🏁 WAR CONCLUDED: The war between ${TC[war.attacker].name} and ${TC[war.defender].name} has finished.`);
     toast_("War concluded.", "info");
