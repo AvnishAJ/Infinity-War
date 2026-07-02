@@ -837,7 +837,6 @@ function TR3({teamId,team,locked,setStrategy}){
         <div style={{marginBottom:6,opacity:.6,fontSize:11,letterSpacing:1}}>COMBAT RULES</div>
         <div>⚔️ <strong style={{color:"#ff6666"}}>AGGRESSIVE</strong> — You declare war and launch missile attacks.</div>
         <div style={{marginTop:6}}>🛡️ <strong style={{color:"#00ff88"}}>PASSIVE</strong> — You hold the line. Gets an extra <strong style={{color:"#00ff88"}}>2500 hitpoints</strong>.</div>
-        <div style={{marginTop:6}}>🤝 <strong style={{color:"#fde047"}}>ALLIANCE</strong> — In Round 4, aggressive teams can invite others to form an alliance for the war.</div>
       </div>
 
       <div style={{display:"flex",gap:12}}>
