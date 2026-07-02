@@ -43,7 +43,7 @@ const SHOP_ITEMS = [
 ];
 
 const mkTeam = () => ({
-  gold:0, hp:0, zOpt:"",
+  gold:0, hp:500, zOpt:"",
   strategy:null,
   safes:[0,0,0,0,0], safeHp:[0,0,0,0,0], safeStatus:["ok","ok","ok","ok","ok"],
   safesLocked:false,
@@ -1368,7 +1368,7 @@ export default function App(){
   },[gameState.teams,addLog]);
 
   const setZOpt=useCallback((tid,val)=>{
-    const z=parseFloat(val)||0,hp=Math.round(z*5);
+    const z=parseFloat(val)||0,hp=500+Math.round(z*5);
     fbSet(`game/teams/${tid}/zOpt`,val);
     fbSet(`game/teams/${tid}/hp`,hp);
     if(val)addLog(`${TC[tid].name}: Z_opt=${val} → ${hp} HP`);
