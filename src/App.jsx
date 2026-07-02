@@ -1640,7 +1640,7 @@ export default function App(){
 
   const concludeWar=useCallback((warId)=>{
     const war = (gameState.wars || {})[warId];
-    if(!war) return;
+    if(!war || war.status === "resolved") return;
     
     const processAlliance = (idA, idB) => {
       if(!idA || !idB) return;
