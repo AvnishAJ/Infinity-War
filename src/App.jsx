@@ -917,9 +917,9 @@ function TR4({teamId,team,teams,alliances,attacks,wars,allocateSafe,lockSafes,qu
     }
   };
 
-  const totalMissiles = Math.floor((team.gold || 0) / 100);
+  const totalMissiles = isAl ? Math.floor((al.gold || 0) / 100) : Math.floor((team.gold || 0) / 100);
   const usedMissiles = Object.values(attacks || {})
-    .filter(a => a.attackerId === teamId && a.status !== "rejected")
+    .filter(a => (a.attackerId === teamId || (isAl && a.attackerId === alId)) && a.status !== "rejected")
     .reduce((s, a) => s + (a.missiles || 0), 0);
   const availMissiles = Math.max(0, totalMissiles - usedMissiles);
 
