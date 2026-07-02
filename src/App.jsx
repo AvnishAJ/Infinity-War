@@ -63,7 +63,7 @@ function getTeamHp(team, round) {
   if (!team) return 0;
   if (round === 4) {
     const safeHp = team.safeHp || [0, 0, 0, 0, 0];
-    return team.safesLocked ? safeHp.reduce((a, b) => a + b, 0) : 3100;
+    return team.safesLocked ? safeHp.reduce((a, b) => a + (Number(b)||0), 0) : (team.hp || 0);
   }
   const base = team.hp || 0;
   const extra = team.strategy === "PASSIVE" ? 2500 : 0;
@@ -781,7 +781,7 @@ function TR2({teamId,team,allTeams,giveDiplomacy,showToast}){
           :<div style={{fontSize:12,opacity:.35,marginTop:5}}>Awaiting admin to enter Z<sub>opt</sub>…</div>}
         <div style={{marginTop:12,padding:10,borderRadius:8,background:"rgba(0,212,255,.06)",
           border:"1px solid rgba(0,212,255,.15)",fontSize:12,opacity:.8}}>
-          💡 In Round 4, you receive 3,100 total hitpoints and distribute them across your 5 safes.
+          💡 In Round 4, you distribute your entire team's total HP across your 5 safes.
         </div>
       </div>
       {team.hp>0&&(
@@ -900,8 +900,8 @@ function TR4({teamId,team,teams,attacks,wars,allocateSafe,lockSafes,queueAttack,
   const doLock=()=>{
     if(sumG!==team.gold){
       setErrG(`Gold mismatch: ${sumG.toLocaleString()} ≠ ${team.gold.toLocaleString()}.`);
-    } else if(sumH!==3100){
-      setErrG(`HP mismatch: ${sumH.toLocaleString()} ≠ 3,100.`);
+    } else if(sumH!==team.hp){
+      setErrG(`HP mismatch: ${sumH.toLocaleString()} ≠ ${team.hp.toLocaleString()}.`);
     } else {
       setErrG("");
       lockSafes(teamId);
@@ -938,7 +938,7 @@ function TR4({teamId,team,teams,attacks,wars,allocateSafe,lockSafes,queueAttack,
       <div>
         <div className="ob" style={{fontSize:11,letterSpacing:3,color:cfg.color,opacity:.7,marginBottom:14}}>VIBRANIUM VAULT ALLOCATION</div>
         <div style={{fontSize:12,opacity:.6,marginBottom:14,lineHeight:1.5}}>
-          Distribute your <span style={{color:"#fde047",fontWeight:700}}>{team.gold.toLocaleString()} Au</span> and <span style={{color:"#00ff88",fontWeight:700}}>3,100 HP</span> across your 5 safes.
+          Distribute your <span style={{color:"#fde047",fontWeight:700}}>{team.gold.toLocaleString()} Au</span> and <span style={{color:"#00ff88",fontWeight:700}}>{(team.hp||0).toLocaleString()} HP</span> across your 5 safes.
         </div>
         <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:10,marginBottom:12}}>
           {safes.map((g,i)=>{
@@ -978,7 +978,7 @@ function TR4({teamId,team,teams,attacks,wars,allocateSafe,lockSafes,queueAttack,
           </div>
           <div style={{padding:"8px 12px",borderRadius:6,background:"rgba(0,255,136,.05)",border:"1px solid rgba(0,255,136,.15)"}}>
             <div style={{fontSize:11,color:"#00ff88",marginBottom:2}}>HP Allocated</div>
-            <div style={{fontSize:14,fontWeight:700,color:sumH===3100?"#00ff88":"#ff5555"}}>{sumH.toLocaleString()} / 3,100</div>
+            <div style={{fontSize:14,fontWeight:700,color:sumH===team.hp?"#00ff88":"#ff5555"}}>{sumH.toLocaleString()} / {(team.hp||0).toLocaleString()}</div>
           </div>
         </div>
         {!team.safesLocked&&<button className="btn" onClick={doLock}
@@ -1554,10 +1554,10 @@ export default function App(){
 
   const lockSafes=useCallback((tid)=>{
     const tm=gameState.teams[tid];
-    const sumG=(tm.safes||[]).reduce((a,b)=>a+b,0);
+    const sumG=(Array.isArray(tm.safes)?tm.safes:Object.values(tm.safes||{})).reduce((a,b)=>a+(Number(b)||0),0);
     if(sumG!==tm.gold)return;
-    const sumH=(tm.safeHp||[]).reduce((a,b)=>a+b,0);
-    if(sumH!==3100)return;
+    const sumH=(Array.isArray(tm.safeHp)?tm.safeHp:Object.values(tm.safeHp||{})).reduce((a,b)=>a+(Number(b)||0),0);
+    if(sumH!==tm.hp)return;
     fbSet(`game/teams/${tid}/safesLocked`,true);
     addLog(`${TC[tid].name}: Vaults sealed.`);
   },[gameState.teams,addLog]);
