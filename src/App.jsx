@@ -1806,13 +1806,12 @@ export default function App(){
   },[gameState.round,addLog]);
 
   const NAV=[
-    {id:"admin",  label:"⚡ ADMIN",  col:"#fde047"},
-    {id:"space",  label:"💠 SPACE",  col:"#00d4ff"},
-    {id:"reality",label:"🔴 REALITY",col:"#ff3333"},
-
-    {id:"mind",   label:"💛 MIND",   col:"#fde047"},
-    {id:"time",   label:"⏳ TIME",   col:"#00ff88"},
-    {id:"soul",   label:"🔶 SOUL",   col:"#ff8c00"},
+    {id:"admin",  label:"⚡ ADMIN",            col:"#fde047"},
+    {id:"space",  label:"💠 The Empire",       col:"#00d4ff"},
+    {id:"reality",label:"🔴 Homelanders",      col:"#ff3333"},
+    {id:"mind",   label:"💛 Bowser",           col:"#fde047"},
+    {id:"time",   label:"⏳ Viltrumites",      col:"#00ff88"},
+    {id:"soul",   label:"🔶 Captain Underpants",col:"#ff8c00"},
   ];
 
   const handlers={
