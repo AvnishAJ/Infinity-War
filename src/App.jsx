@@ -921,14 +921,11 @@ function TR4({teamId,team,teams,alliances,attacks,wars,allocateSafe,lockSafes,qu
   };
 
   const getTeamAggroBonus = (t) => t?.strategy === "AGGRESSIVE" ? 3 : 0;
-  const aggroBonus = isAl 
-    ? getTeamAggroBonus(teams[al.members[0]]) + getTeamAggroBonus(teams[al.members[1]])
-    : getTeamAggroBonus(team);
   const getTeamBoughtMissiles = (t) => t?.boughtMissiles || 0;
-  const boughtMissiles = isAl
-    ? getTeamBoughtMissiles(teams[al.members[0]]) + getTeamBoughtMissiles(teams[al.members[1]])
-    : getTeamBoughtMissiles(team);
-  const totalMissiles = (isAl ? Math.floor((al.gold || 0) / 20) : Math.floor((team.gold || 0) / 20)) + aggroBonus + boughtMissiles;
+  const getTeamMissiles = (t) => Math.floor((t?.gold || 0) / 20) + getTeamAggroBonus(t) + getTeamBoughtMissiles(t);
+  const totalMissiles = isAl 
+    ? Math.floor((getTeamMissiles(teams[al.members[0]]) + getTeamMissiles(teams[al.members[1]])) * 0.75)
+    : getTeamMissiles(team);
   const usedMissiles = Object.values(attacks || {})
     .filter(a => (a.attackerId === teamId || (isAl && a.attackerId === alId)) && a.status !== "rejected")
     .reduce((s, a) => s + (a.missiles || 0), 0);
