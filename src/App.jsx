@@ -1666,17 +1666,8 @@ export default function App(){
       const initialAvgGold = Math.floor(((tmA.gold||0) + (tmB.gold||0)) / 2);
       const diffGold = (al.gold || 0) - initialAvgGold;
       
-      const getTeamBaseHp = (t) => (t.hp || 0) + (t.strategy === "PASSIVE" ? 500 : 0);
-      const initialAvgHp = Math.floor((getTeamBaseHp(tmA) + getTeamBaseHp(tmB)) / 2);
-      const currentSafeHp = Array.from({length:5}, (_,i)=>(al.safeHp?.[i]||0));
-      const sumHp = currentSafeHp.reduce((a,b)=>a+(Number(b)||0), 0);
-      const diffHp = sumHp - initialAvgHp;
-      
       fbSet(`game/teams/${idA}/gold`, Math.max(0, tmA.gold + Math.floor(diffGold / 2)));
       fbSet(`game/teams/${idB}/gold`, Math.max(0, tmB.gold + Math.floor(diffGold / 2)));
-      
-      fbSet(`game/teams/${idA}/hp`, Math.max(0, (tmA.hp||0) + Math.floor(diffHp / 2)));
-      fbSet(`game/teams/${idB}/hp`, Math.max(0, (tmB.hp||0) + Math.floor(diffHp / 2)));
     };
 
     if (war.attackerAlly) processAlliance(war.attacker, war.attackerAlly);
