@@ -23,7 +23,7 @@ const db = getDatabase(firebaseApp);
 const TC = {
   space:   { name:"The Empire",         color:"#00d4ff", rgb:"0,212,255",  em:"💠" },
   reality: { name:"Homelanders",        color:"#ff3333", rgb:"255,51,51",  em:"🔴" },
-  power:   { name:"Thanos' Children",   color:"#9b30ff", rgb:"155,48,255", em:"🔮" },
+
   mind:    { name:"Bowser",             color:"#fde047", rgb:"253,224,71", em:"💛" },
   time:    { name:"Viltrumites",        color:"#00ff88", rgb:"0,255,136",  em:"⏳" },
   soul:    { name:"Captain Underpants", color:"#ff8c00", rgb:"255,140,0",  em:"🔶" },
@@ -72,7 +72,7 @@ function getTeamHp(team, round) {
 
 const DEFAULT_STATE = {
   round: 1, locked: false,
-  teams: { space:mkTeam(), reality:mkTeam(), power:mkTeam(), mind:mkTeam(), time:mkTeam(), soul:mkTeam() },
+  teams: { space:mkTeam(), reality:mkTeam(), mind:mkTeam(), time:mkTeam(), soul:mkTeam() },
   attacks: {}, logs: {}, alliances: {}, wars: {},
 };
 
@@ -1809,7 +1809,7 @@ export default function App(){
     {id:"admin",  label:"⚡ ADMIN",  col:"#fde047"},
     {id:"space",  label:"💠 SPACE",  col:"#00d4ff"},
     {id:"reality",label:"🔴 REALITY",col:"#ff3333"},
-    {id:"power",  label:"🔮 POWER",  col:"#9b30ff"},
+
     {id:"mind",   label:"💛 MIND",   col:"#fde047"},
     {id:"time",   label:"⏳ TIME",   col:"#00ff88"},
     {id:"soul",   label:"🔶 SOUL",   col:"#ff8c00"},
