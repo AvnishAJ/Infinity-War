@@ -131,7 +131,105 @@ select option{background:#0d0d26;color:#e0e0ff}
 .qbtn{font-family:'Rajdhani',sans-serif;font-size:10px;font-weight:700;padding:3px 5px;border:1px solid;border-radius:4px;cursor:pointer;transition:all .15s;white-space:nowrap;display:flex;align-items:center;gap:2px}
 .qbtn:hover:not(:disabled){filter:brightness(1.3)}
 .qbtn:disabled{opacity:.3;cursor:not-allowed}
+@keyframes explode-shake{0%,100%{transform:translateX(0)}10%,30%,50%,70%,90%{transform:translateX(-4px)}20%,40%,60%,80%{transform:translateX(4px)}}
+@keyframes explode-flash{0%{background:rgba(255,50,0,.4);box-shadow:0 0 30px rgba(255,50,0,.6)}100%{background:transparent;box-shadow:none}}
+@keyframes gold-rain{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(30px) rotate(360deg);opacity:0}}
+.explode-anim{animation:explode-shake .5s ease,explode-flash .8s ease}
+.gold-rain-anim{animation:gold-rain 1s ease-out forwards}
+@keyframes lb-slide{from{opacity:0;transform:translateX(-15px)}to{opacity:1;transform:translateX(0)}}
+.lb-row{animation:lb-slide .4s ease}
 `;
+
+/* ═══════════════════════════════════════════════
+   SOUND EFFECTS (Web Audio API)
+═══════════════════════════════════════════════ */
+const SFX = {
+  _ctx: null,
+  _getCtx() {
+    if (!this._ctx) this._ctx = new (window.AudioContext || window.webkitAudioContext)();
+    return this._ctx;
+  },
+  play(type) {
+    try {
+      const ctx = this._getCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      gain.gain.value = 0.15;
+      switch(type) {
+        case 'launch': {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(800, ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.3);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+          osc.start(); osc.stop(ctx.currentTime + 0.4);
+          break;
+        }
+        case 'explode': {
+          const bufferSize = ctx.sampleRate * 0.5;
+          const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+          const data = buffer.getChannelData(0);
+          for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize);
+          const noise = ctx.createBufferSource();
+          noise.buffer = buffer;
+          const noiseGain = ctx.createGain();
+          noiseGain.gain.setValueAtTime(0.3, ctx.currentTime);
+          noiseGain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+          noise.connect(noiseGain);
+          noiseGain.connect(ctx.destination);
+          noise.start(); noise.stop(ctx.currentTime + 0.5);
+          break;
+        }
+        case 'coin': {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(1200, ctx.currentTime);
+          osc.frequency.setValueAtTime(1600, ctx.currentTime + 0.08);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+          osc.start(); osc.stop(ctx.currentTime + 0.2);
+          break;
+        }
+        case 'alliance': {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(523, ctx.currentTime);
+          osc.frequency.setValueAtTime(659, ctx.currentTime + 0.12);
+          osc.frequency.setValueAtTime(784, ctx.currentTime + 0.24);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.45);
+          osc.start(); osc.stop(ctx.currentTime + 0.45);
+          break;
+        }
+        case 'war': {
+          osc.type = 'square';
+          osc.frequency.setValueAtTime(150, ctx.currentTime);
+          osc.frequency.setValueAtTime(100, ctx.currentTime + 0.15);
+          osc.frequency.setValueAtTime(80, ctx.currentTime + 0.3);
+          gain.gain.setValueAtTime(0.2, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+          osc.start(); osc.stop(ctx.currentTime + 0.5);
+          break;
+        }
+        case 'shield': {
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(400, ctx.currentTime);
+          osc.frequency.setValueAtTime(600, ctx.currentTime + 0.1);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
+          osc.start(); osc.stop(ctx.currentTime + 0.25);
+          break;
+        }
+        case 'snap': {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(2000, ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(50, ctx.currentTime + 1.5);
+          gain.gain.setValueAtTime(0.2, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 1.5);
+          osc.start(); osc.stop(ctx.currentTime + 1.5);
+          break;
+        }
+        default: break;
+      }
+    } catch(e) { /* ignore audio errors */ }
+  }
+};
 
 /* ═══════════════════════════════════════════════
    STARS
@@ -676,6 +774,43 @@ function AdminPanel({round,teams,locked,logs,attacks,snap,alliances,wars,handler
                 {attempts>0&&<div style={{fontSize:11,color:"#ff8c00"}}>⚡×{attempts}</div>}
                 {(tm.hints||0)>0&&<div style={{fontSize:11,color:"#fde047"}}>💡×{tm.hints}</div>}
                 {tm.allianceWith&&<div style={{fontSize:11,color:"#fde047"}}>🤝 {TC[tm.allianceWith]?.name}</div>}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="gl" style={{padding:"16px 20px"}}>
+        <div className="ob" style={{fontSize:10,letterSpacing:3,opacity:.45,marginBottom:12}}>🏆 LIVE GOLD LEADERBOARD</div>
+        <div style={{display:"flex",flexDirection:"column",gap:6}}>
+          {[...IDS].sort((a,b)=>(teams[b].gold||0)-(teams[a].gold||0)).map((tid,i)=>{
+            const cfg=TC[tid],tm=teams[tid];
+            const maxGold=Math.max(...IDS.map(t=>teams[t].gold||0),1);
+            const pct=Math.min(100,((tm.gold||0)/maxGold)*100);
+            const medals=['🥇','🥈','🥉'];
+            return (
+              <div key={tid} className="lb-row" style={{display:"flex",alignItems:"center",gap:10,
+                padding:"8px 12px",borderRadius:8,
+                background:`rgba(${cfg.rgb},.04)`,
+                border:`1px solid rgba(${cfg.rgb},.12)`,
+                transition:"all .5s ease"}}>
+                <div style={{width:28,textAlign:"center",fontSize:i<3?18:14,fontWeight:700,
+                  color:i<3?"#fde047":"rgba(255,255,255,.4)"}}>
+                  {i<3?medals[i]:i+1}
+                </div>
+                <div style={{display:"flex",alignItems:"center",gap:6,minWidth:140}}>
+                  <span style={{fontSize:16}}>{cfg.em}</span>
+                  <span className="ob" style={{color:cfg.color,fontSize:11}}>{cfg.name}</span>
+                </div>
+                <div style={{flex:1,height:20,background:"rgba(255,255,255,.04)",borderRadius:10,overflow:"hidden",position:"relative"}}>
+                  <div style={{height:"100%",width:`${pct}%`,borderRadius:10,
+                    background:`linear-gradient(90deg, rgba(${cfg.rgb},.3), rgba(${cfg.rgb},.6))`,
+                    boxShadow:`0 0 12px rgba(${cfg.rgb},.3)`,
+                    transition:"width .8s cubic-bezier(.4,0,.2,1)"}}/>
+                </div>
+                <div className="ob" style={{fontSize:13,fontWeight:700,color:"#fde047",minWidth:70,textAlign:"right"}}>
+                  {(tm.gold||0).toLocaleString()} Au
+                </div>
               </div>
             );
           })}
@@ -1565,6 +1700,7 @@ export default function App(){
     }
 
     addLog(`🤝 ALLIANCE FORMED: ${TC[fromId].name} + ${TC[teamId].name}`);
+    SFX.play('alliance');
     toast_(`🤝 Alliance formed: ${TC[fromId].name} + ${TC[teamId].name}!`, "success");
   },[gameState.teams,gameState.wars,addLog]);
 
@@ -1644,6 +1780,7 @@ export default function App(){
       createdAt: Date.now()
     });
     addLog(`⚔️ WAR DECLARED: ${TC[attackerId].name} has declared war on ${TC[defenderId].name}!`);
+    SFX.play('war');
     toast_(`War declared on ${TC[defenderId].name}!`, "warning");
   },[addLog]);
 
@@ -1703,6 +1840,7 @@ export default function App(){
       time:new Date().toLocaleTimeString("en",{hour:"2-digit",minute:"2-digit"})};
     set(ref(db,`game/attacks/${id}`),atk);
     addLog(`ATTACK QUEUED: S#${safeIdx+1} targeted with ${missiles} missiles`);
+    SFX.play('launch');
     toast_("🚀 Attack queued. Cipher pending.","warning");
   },[addLog]);
 
@@ -1757,6 +1895,9 @@ export default function App(){
     
     fbSet(`game/attacks/${atk.id}/status`,"resolved");
 
+    if(typ==="danger") SFX.play('explode');
+    else SFX.play('shield');
+
     addLog(`SIEGE [${attSide.name}→${defSide.name}]: ${msg}`);
     toast_(msg,typ);
     
@@ -1775,6 +1916,7 @@ export default function App(){
     const tm=gameState.teams[tid];
     if(tm.gold<item.price){toast_("Not enough gold!","danger");return;}
     fbSet(`game/teams/${tid}/gold`,tm.gold-item.price);
+    SFX.play('coin');
     if(item.id==="missiles") {
       fbSet(`game/teams/${tid}/boughtMissiles`,(tm.boughtMissiles||0)+5);
       addLog(`🛒 ${TC[tid].name} purchased 5 Missiles (${item.price}Au)`);
@@ -1788,6 +1930,7 @@ export default function App(){
 
   const triggerSnap=useCallback(()=>{
     setSnap(true);
+    SFX.play('snap');
     toast_("Perfectly balanced, as all things should be.","snap");
     addLog("⚡ THANOS: The snap reverberates across the universe.");
     setTimeout(()=>setSnap(false),3200);
