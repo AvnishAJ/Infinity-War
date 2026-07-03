@@ -66,7 +66,7 @@ function getTeamHp(team, round) {
     return team.safesLocked ? safeHp.reduce((a, b) => a + (Number(b)||0), 0) : (team.hp || 0);
   }
   const base = team.hp || 0;
-  const extra = team.strategy === "PASSIVE" ? 2500 : 0;
+  const extra = team.strategy === "PASSIVE" ? 500 : 0;
   return base + extra;
 }
 
@@ -415,7 +415,7 @@ function R3Admin({teams,locked,lockStrategies}){
   return (
     <div>
       <div style={{marginBottom:12,fontSize:13,opacity:.6,lineHeight:1.5}}>
-        Teams choose their stance. <strong style={{color:"#00ff88"}}>PASSIVE</strong> teams get an extra <strong style={{color:"#00ff88"}}>2500 HP</strong>. <strong style={{color:"#ff6666"}}>AGGRESSIVE</strong> teams can wage war and launch missile attacks in Round 4.
+        Teams choose their stance. <strong style={{color:"#00ff88"}}>PASSIVE</strong> teams get an extra <strong style={{color:"#00ff88"}}>500 HP</strong>. <strong style={{color:"#ff6666"}}>AGGRESSIVE</strong> teams can wage war and launch missile attacks in Round 4.
       </div>
       <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,marginBottom:16}}>
         {IDS.map(tid=>{
@@ -846,7 +846,7 @@ function TR3({teamId,team,locked,setStrategy}){
         border:"1px solid rgba(255,255,255,.07)",fontSize:13,lineHeight:1.7}}>
         <div style={{marginBottom:6,opacity:.6,fontSize:11,letterSpacing:1}}>COMBAT RULES</div>
         <div>⚔️ <strong style={{color:"#ff6666"}}>AGGRESSIVE</strong> — You declare war and launch missile attacks.</div>
-        <div style={{marginTop:6}}>🛡️ <strong style={{color:"#00ff88"}}>PASSIVE</strong> — You hold the line. Gets an extra <strong style={{color:"#00ff88"}}>2500 hitpoints</strong>.</div>
+        <div style={{marginTop:6}}>🛡️ <strong style={{color:"#00ff88"}}>PASSIVE</strong> — You hold the line. Gets an extra <strong style={{color:"#00ff88"}}>500 hitpoints</strong>.</div>
       </div>
 
       <div style={{display:"flex",gap:12}}>
@@ -866,7 +866,7 @@ function TR3({teamId,team,locked,setStrategy}){
               <div style={{fontSize:34,marginBottom:8}}>{isAgg?"⚔️":"🛡️"}</div>
               <div>{s}</div>
               <div style={{fontSize:10,marginTop:8,opacity:.65,fontFamily:"'Rajdhani',sans-serif",fontWeight:400}}>
-                {isAgg?`Wages war and fires missiles`:`Defends vaults · +2500 HP`}
+                {isAgg?`Wages war and fires missiles`:`Defends vaults · +500 HP`}
               </div>
             </button>
           );
@@ -893,8 +893,9 @@ function TR4({teamId,team,teams,alliances,attacks,wars,allocateSafe,lockSafes,qu
   const sumG = safes.reduce((a,b)=>a+(Number(b)||0), 0);
   const sumH = safeHp.reduce((a,b)=>a+(Number(b)||0), 0);
   
+  const getTeamBaseHp = (t) => (t.hp || 0) + (t.strategy === "PASSIVE" ? 500 : 0);
   const targetGold = isAl ? (al.gold||0) : (team.gold||0);
-  const targetHp = isAl ? (al.hp||0) : (team.hp||0);
+  const targetHp = isAl ? (al.hp||0) : getTeamBaseHp(team);
   const locked = isAl ? al.sealed : team.safesLocked;
   
   const [warTgt, setWarTgt] = useState("");
@@ -1543,8 +1544,9 @@ export default function App(){
     fbSet(`game/teams/${teamId}/allianceProposalFrom`,null);
 
     const allianceId=[fromId,teamId].sort().join("_");
+    const getTeamBaseHp = (t) => (t.hp || 0) + (t.strategy === "PASSIVE" ? 500 : 0);
     const avgGold=Math.floor(((tm.gold||0)+(fr.gold||0))/2);
-    const avgHp=Math.floor(((tm.hp||0)+(fr.hp||0))/2);
+    const avgHp=Math.floor((getTeamBaseHp(tm)+getTeamBaseHp(fr))/2);
     fbSet(`game/alliances/${allianceId}`, mkAlliance(fromId,teamId,avgGold,avgHp));
 
     const activeWar = Object.values(gameState.wars || {}).find(w => w.status === 'active' && (w.attacker === fromId || w.defender === fromId || w.attacker === teamId || w.defender === teamId));
@@ -1654,7 +1656,8 @@ export default function App(){
       const initialAvgGold = Math.floor(((tmA.gold||0) + (tmB.gold||0)) / 2);
       const diffGold = (al.gold || 0) - initialAvgGold;
       
-      const initialAvgHp = Math.floor(((tmA.hp||0) + (tmB.hp||0)) / 2);
+      const getTeamBaseHp = (t) => (t.hp || 0) + (t.strategy === "PASSIVE" ? 500 : 0);
+      const initialAvgHp = Math.floor((getTeamBaseHp(tmA) + getTeamBaseHp(tmB)) / 2);
       const currentSafeHp = Array.from({length:5}, (_,i)=>(al.safeHp?.[i]||0));
       const sumHp = currentSafeHp.reduce((a,b)=>a+(Number(b)||0), 0);
       const diffHp = sumHp - initialAvgHp;
