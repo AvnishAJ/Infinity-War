@@ -39,7 +39,7 @@ const ATTACK_HP_DAMAGE = 150;
 const ADMIN_PIN = "1408";
 
 const SHOP_ITEMS = [
-  { id:"hint", name:"Hint Token", desc:"Unlock a hint from the Organiser.", price:100, icon:"💡" },
+  { id:"missiles", name:"5 Missiles", desc:"Purchase 5 extra missiles.", price:75, icon:"🚀" },
 ];
 
 const mkTeam = () => ({
@@ -467,8 +467,9 @@ function R4Admin({teams,attacks,approveAtk,rejectAtk,alliances,wars,concludeWar,
         {IDS.map(tid=>{
           const cfg=TC[tid],tm=teams[tid];
           const safeHp=tm.safeHp||[0,0,0,0,0];
-          const aggroBonus = tm.strategy === "AGGRESSIVE" ? 5 : 0;
-          const totalM = Math.floor((tm.gold||0)/20) + aggroBonus;
+          const aggroBonus = tm.strategy === "AGGRESSIVE" ? 3 : 0;
+          const boughtMissiles = tm.boughtMissiles || 0;
+          const totalM = Math.floor((tm.gold||0)/20) + aggroBonus + boughtMissiles;
           const usedM = atksArr.filter(a=>a.attackerId===tid && a.status!=="rejected").reduce((s,a)=>s+(a.missiles||0),0);
           const availM = Math.max(0, totalM - usedM);
 
@@ -919,11 +920,15 @@ function TR4({teamId,team,teams,alliances,attacks,wars,allocateSafe,lockSafes,qu
     }
   };
 
-  const getTeamAggroBonus = (t) => t?.strategy === "AGGRESSIVE" ? 5 : 0;
+  const getTeamAggroBonus = (t) => t?.strategy === "AGGRESSIVE" ? 3 : 0;
   const aggroBonus = isAl 
     ? getTeamAggroBonus(teams[al.members[0]]) + getTeamAggroBonus(teams[al.members[1]])
     : getTeamAggroBonus(team);
-  const totalMissiles = (isAl ? Math.floor((al.gold || 0) / 20) : Math.floor((team.gold || 0) / 20)) + aggroBonus;
+  const getTeamBoughtMissiles = (t) => t?.boughtMissiles || 0;
+  const boughtMissiles = isAl
+    ? getTeamBoughtMissiles(teams[al.members[0]]) + getTeamBoughtMissiles(teams[al.members[1]])
+    : getTeamBoughtMissiles(team);
+  const totalMissiles = (isAl ? Math.floor((al.gold || 0) / 20) : Math.floor((team.gold || 0) / 20)) + aggroBonus + boughtMissiles;
   const usedMissiles = Object.values(attacks || {})
     .filter(a => (a.attackerId === teamId || (isAl && a.attackerId === alId)) && a.status !== "rejected")
     .reduce((s, a) => s + (a.missiles || 0), 0);
@@ -1782,9 +1787,15 @@ export default function App(){
     const tm=gameState.teams[tid];
     if(tm.gold<item.price){toast_("Not enough gold!","danger");return;}
     fbSet(`game/teams/${tid}/gold`,tm.gold-item.price);
-    fbSet(`game/teams/${tid}/hints`,(tm.hints||0)+1);
-    addLog(`🛒 ${TC[tid].name} purchased ${item.name} (${item.price}Au)`);
-    toast_("💡 Hint purchased! Show this screen to the Organiser.","success");
+    if(item.id==="missiles") {
+      fbSet(`game/teams/${tid}/boughtMissiles`,(tm.boughtMissiles||0)+5);
+      addLog(`🛒 ${TC[tid].name} purchased 5 Missiles (${item.price}Au)`);
+      toast_("🚀 5 Missiles purchased!","success");
+    } else {
+      fbSet(`game/teams/${tid}/hints`,(tm.hints||0)+1);
+      addLog(`🛒 ${TC[tid].name} purchased ${item.name} (${item.price}Au)`);
+      toast_("💡 Hint purchased! Show this screen to the Organiser.","success");
+    }
   },[gameState.teams,addLog]);
 
   const triggerSnap=useCallback(()=>{
