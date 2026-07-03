@@ -467,7 +467,7 @@ function R4Admin({teams,attacks,approveAtk,rejectAtk,alliances,wars,concludeWar,
         {IDS.map(tid=>{
           const cfg=TC[tid],tm=teams[tid];
           const safeHp=tm.safeHp||[0,0,0,0,0];
-          const totalM = Math.floor((tm.gold||0)/100);
+          const totalM = Math.floor((tm.gold||0)/10);
           const usedM = atksArr.filter(a=>a.attackerId===tid && a.status!=="rejected").reduce((s,a)=>s+(a.missiles||0),0);
           const availM = Math.max(0, totalM - usedM);
 
@@ -918,7 +918,7 @@ function TR4({teamId,team,teams,alliances,attacks,wars,allocateSafe,lockSafes,qu
     }
   };
 
-  const totalMissiles = isAl ? Math.floor((al.gold || 0) / 100) : Math.floor((team.gold || 0) / 100);
+  const totalMissiles = isAl ? Math.floor((al.gold || 0) / 10) : Math.floor((team.gold || 0) / 10);
   const usedMissiles = Object.values(attacks || {})
     .filter(a => (a.attackerId === teamId || (isAl && a.attackerId === alId)) && a.status !== "rejected")
     .reduce((s, a) => s + (a.missiles || 0), 0);
